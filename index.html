@@ -2,6 +2,8 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<link rel="preload" as="image" href="hero-bg.webp" media="(min-width:769px)">
+<link rel="preload" as="image" href="hero-sp.webp" media="(max-width:768px)" type="image/webp">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>相続案件獲得支援サービス｜合同会社Waaap</title>
 <meta name="description" content="不動産会社・建築会社（ハウスメーカー）・士業事務所・保険代理店向けの相続案件獲得支援サービス。年間500回以上のオフラインイベント運営、年間10,000件以上の対面面談獲得実績。">
@@ -1497,7 +1499,7 @@
         #fff 32%,
         rgba(255,255,255,.88) 46%,
         rgba(255,255,255,0) 62%),
-      url('hero-bg.png') right center/cover no-repeat;
+      url('hero-bg.webp') right center/cover no-repeat;
     min-height:520px;
     display:flex;align-items:center;
     padding:0;
@@ -3150,7 +3152,10 @@
   <div class="sp-fv-inner">
     <h1 class="sp-fv-hl"><span class="sp-fv-hl-l1">相続案件の獲得に</span><em>お困りではありませんか？</em></h1>
     <div class="sp-fv-photo">
-      <img src="hero-sp.png" alt="相続相談シーン">
+      <picture>
+        <source srcset="hero-sp.webp" type="image/webp">
+        <img src="hero-sp.png" alt="相続相談シーン" loading="eager" fetchpriority="high">
+      </picture>
     </div>
     <div class="sp-fv-stats">
       <div class="sp-fv-stat">
@@ -3791,8 +3796,14 @@
               <input type="tel" name="tel" placeholder="090-0000-0000">
             </div>
           </div>
-          <button type="submit" class="bb-submit">無料相談を申し込む</button>
+          <button type="submit" class="bb-submit" id="contact-submit">無料相談を申し込む</button>
           <p class="bb-form-note">送信内容は弊社プライバシーポリシーに基づき適切に管理いたします。</p>
+          <div id="contact-success" style="display:none;margin-top:16px;padding:16px 20px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;color:#1b5e20;font-size:14px;font-weight:600;text-align:center;">
+            ✅ お問い合わせを受け付けました。確認メールをお送りしましたのでご確認ください。
+          </div>
+          <div id="contact-error" style="display:none;margin-top:16px;padding:16px 20px;background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;color:#7f1d1d;font-size:14px;font-weight:600;text-align:center;">
+            ❌ 送信に失敗しました。時間をおいて再度お試しいただくか、直接メールにてご連絡ください。
+          </div>
         </form>
       </div>
     </div>
@@ -3817,9 +3828,50 @@
 <script>
   
 
-  document.getElementById('contact-form').addEventListener('submit', function(e){
+  document.getElementById('contact-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    alert('お問い合わせありがとうございます。担当者より追ってご連絡いたします。\n（本フォームはデモ表示です。実際の送信処理を行うには、サーバー側の実装が必要です。）');
+
+    const form = e.target;
+    const btn = document.getElementById('contact-submit');
+    const successEl = document.getElementById('contact-success');
+    const errorEl = document.getElementById('contact-error');
+
+    // リセット
+    successEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+
+    const data = {
+      company: form.company.value.trim(),
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      tel: form.tel ? form.tel.value.trim() : '',
+    };
+
+    try {
+      const res = await fetch('/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+
+      if (res.ok && json.ok) {
+        successEl.style.display = 'block';
+        form.reset();
+        successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        errorEl.style.display = 'block';
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } catch {
+      errorEl.style.display = 'block';
+      errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '無料相談を申し込む';
+    }
   });
 </script>
 
